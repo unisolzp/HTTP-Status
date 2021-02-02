@@ -1,15 +1,12 @@
 var RPATH = {};
-// Set some variables
 RPATH.DEBUG = true;
 RPATH.tabs = {};
 RPATH.REQUEST_FILTER = {'urls': ['<all_urls>'], 'types': ['main_frame']};
 RPATH.EXTRA_INFO = ['responseHeaders'];
 RPATH.init = function ()
 {
-    // Bind our Chrome events.
     try
     {
-        // This is in a try/catch because Chrome 21 (dev) causes errors when debugging (chrome.webRequest can be undefined)
         chrome.webRequest.onBeforeRedirect.addListener(this.webRequestListener, this.REQUEST_FILTER, this.EXTRA_INFO);
         chrome.webRequest.onCompleted.addListener(this.webRequestListener, this.REQUEST_FILTER, this.EXTRA_INFO);
         chrome.tabs.onUpdated.addListener(this.tabUpdated);
@@ -33,7 +30,6 @@ RPATH.init = function ()
         var prevVersion = localStorage['version'];
         if (currVersion != prevVersion)
         {
-            // Check if we just installed this extension.
             if (typeof prevVersion == 'undefined')
             {
                 RPATH.onInstall();
@@ -55,16 +51,13 @@ RPATH.webRequestListener = function (details)
 {
     if (details.tabId > 0)
     {
-        // Have we seen this tab before?
         if (typeof(RPATH.tabs[details.tabId]) == 'undefined')
         {
-            // Not seen this tab, init it.
             RPATH.tabs[details.tabId] = {};
             RPATH.tabs[details.tabId].isRedirect = false;
         }
         RPATH.tabs[details.tabId].lastactive = new Date().getTime();
         RPATH.record(details);
-        // Perform GC 30 out of every 100 requests.
         if (RPATH.rand(1, 100) <= 30)
         {
             RPATH.log('RANDOM GC STARTED');
@@ -96,9 +89,6 @@ RPATH.tabUpdated = function (tabId, changeInfo, tab)
 };
 RPATH.tabUpdate = function (tab)
 {
-    // Look at all the status codes in the path,
-    // decide which is the most important and make a
-    // badge out of it.
     var tabId = tab.id;
     if (typeof( RPATH.tabs[tabId]) != 'undefined')
     {
@@ -153,7 +143,7 @@ RPATH.record = function (details)
     if (typeof(RPATH.tabs[details.tabId].lastrequest) == 'undefined' || RPATH.tabs[details.tabId].lastrequest != details.requestId)
     {
         RPATH.tabs[details.tabId].lastrequest = details.requestId;
-        RPATH.tabs[details.tabId].path = []; // init or reset.
+        RPATH.tabs[details.tabId].path = []; 
     }
     RPATH.tabs[details.tabId].path.push(details);
     if (!details.ip) details.ip = '(not available)';
@@ -169,21 +159,16 @@ RPATH.getTab = function (tabId)
 };
 RPATH.copyTabPath = function (tabId)
 {
-    //RPATH.log('wat');
     if (typeof(RPATH.tabs[tabId]) != 'undefined')
     {
         var tab = RPATH.tabs[tabId];
-        //RPATH.log(tab);
         tab.path.forEach(function (item)
         {
-            //  RPATH.log(item);
         });
         return str;
     }
 };
-/******
- UTILITY
- ******/
+
 RPATH.log = function (msg)
 {
     if (this.DEBUG)
@@ -216,8 +201,7 @@ RPATH.error = function (msg)
         }
     }
 };
-// Look at all active tabs and remove data we have for any
-// tabs that arent visible & more than 30 seconds old.
+
 RPATH.garbageCollect = function ()
 {
     chrome.windows.getAll({populate: true}, function (windows)
@@ -236,7 +220,7 @@ RPATH.garbageCollect = function ()
         for (var tabId in RPATH.tabs)
         {
             var age = (stamp - RPATH.tabs[tabId].lastactive);
-            if (visibleTabs.indexOf(tabId) == -1 && age > 30000) // 30 seconds
+            if (visibleTabs.indexOf(tabId) == -1 && age > 30000)
             {
                 delete RPATH.tabs[tabId];
                 RPATH.log('GC: tab ' + tabId + ' wasnt visible and is stale, so was freed', RPATH.tabs);
