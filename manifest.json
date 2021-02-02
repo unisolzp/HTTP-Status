@@ -3,7 +3,7 @@
    "background": {
       "scripts": [ "js/background.js" ]
    },
-   "description": "在地址栏中显示当前页的 HTTP 状态",
+   "description": "HTTP SCRAPY",
    "homepage_url": "http://www.yuxiaoxi.com/2015-04-28-chrome-extensions-http-status.html",
    "icons": {
       "128": "images/icon-128.png",
